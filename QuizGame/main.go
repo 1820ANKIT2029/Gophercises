@@ -4,8 +4,9 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
+	"math/rand"
 	"os"
-	"strconv"
+	"strings"
 	"time"
 )
 
@@ -13,24 +14,27 @@ func main() {
 	// flags parsing
 	filename := flag.String("f", "problems.csv", "Problem filename flag eg: -f problems.csv")
 	timerValue := flag.Int("t", 30, "Time given to answer a question eg: -t 30")
+	shuffle := flag.Bool("s", false, "question will get shuffle eg: -s")
 	flag.Parse()
 
 	// get questions from file
-	Questions, err := getQuestion(*filename)
+	Questions, err := getQuestion(*filename, *shuffle)
 	if err != nil {
 		fmt.Println("err in getQuestion", err)
 		return
 	}
 
+	// fmt.Println(Questions)
+
 	// Mark, answer temp variable
 	totalMark := len(Questions)
 	mark := 0
-	var answer int
+	var answer string
 
 	// channel for timer, input
 	outTimerChan := make(chan bool)
 	inTimerChan := make(chan bool)
-	answerChan := make(chan int)
+	answerChan := make(chan string)
 
 	go timer(outTimerChan, inTimerChan, *timerValue) // timer goroutine
 
@@ -48,15 +52,9 @@ func main() {
 			i = totalMark + 1
 
 		case answer = <-answerChan:
-			inTimerChan <- false
-			tmp, err := strconv.Atoi(Questions[i][1])
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-
+			answer = strings.ToLower(strings.TrimSpace(answer))
 			// add 1 mark if answer is correct
-			if answer == tmp {
+			if answer == Questions[i][1] {
 				mark++
 			}
 		}
@@ -67,7 +65,7 @@ func main() {
 }
 
 // function to get Question List from the Provided filepath
-func getQuestion(csvfilepath string) ([][]string, error) {
+func getQuestion(csvfilepath string, shuffle bool) ([][]string, error) {
 	file, err := os.Open(csvfilepath)
 	if err != nil {
 		return nil, err
@@ -76,6 +74,13 @@ func getQuestion(csvfilepath string) ([][]string, error) {
 	r := csv.NewReader(file)
 
 	rec, _ := r.ReadAll()
+
+	// shuffle question
+	if shuffle {
+		rand.Shuffle(len(rec), func(i, j int) {
+			rec[i], rec[j] = rec[j], rec[i]
+		})
+	}
 
 	return rec, nil
 }
@@ -102,8 +107,8 @@ func timer(outTimerChan, inTimerChan chan bool, t int) {
 }
 
 // user input goroutine
-func Input(answerChan chan int) {
-	var answer int
+func Input(answerChan chan string) {
+	var answer string
 	fmt.Scan(&answer)
 
 	answerChan <- answer
