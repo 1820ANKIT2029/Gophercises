@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>URL Shortener</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+      background-size: cover;
+      margin: 0;
+    }
+
+    .container {
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      text-align: left;
+      font-weight: bold;
+      color: #555;
+    }
+
+    input[type="text"],
+    input[type="url"] {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    button[type="submit"] {
+      padding: 12px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #28a745;
+    }
+
+    #error {
+      display: none;
+      margin-top: 20px;
+      padding: 12px;
+      font-size: 16px;
+      color: #dc3545;
+      background-color: #f8d7da;
+      border: 1px solid #f5c2c7;
+      border-radius: 6px;
+      position: relative;
+      text-align: left;
+    }
+
+    #error button.dismiss-btn {
+      position: absolute;
+      right: 10px;
+      top: 8px;
+      background: transparent;
+      border: none;
+      color: #dc3545;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>URL Shortener</h1>
+    <form id="shortenForm">
+      <div>
+        <label for="path">Desired Short Path:</label>
+        <input type="text" id="path" name="path" placeholder="e.g., my-link" required>
+      </div>
+      <div>
+        <label for="url">Target URL:</label>
+        <input type="url" id="url" name="url" placeholder="e.g., https://www.example.com" required>
+      </div>
+      <button type="submit">Shorten URL</button>
+    </form>
+    <div id="result"></div>
+    <div id="error">
+      <span id="errorMsg"></span>
+      <button class="dismiss-btn" onclick="hideError()">×</button>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('shortenForm');
+    const resultDiv = document.getElementById('result');
+    const errorDiv = document.getElementById('error');
+    const errorMsg = document.getElementById('errorMsg');
+
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const path = document.getElementById('path').value;
+      const url = document.getElementById('url').value;
+
+      resultDiv.textContent = '';
+      hideError();
+
+      const backendEndpoint = "/v1/shorten";
+
+      fetch(backendEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ path, url }),
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(err => { throw err; });
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data && data.shortUrl) {
+          resultDiv.textContent = `Shortened URL: ${window.location.origin}${data.shortUrl}`;
+          hideError();
+        } else if (data && data.error) {
+          showError(`Error: ${data.error}`);
+        } else {
+          showError('An unexpected error occurred.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showError(`Error: ${error.message || 'Failed to shorten URL'}`);
+      });
+    });
+
+    function showError(message) {
+      errorMsg.textContent = message;
+      errorDiv.style.display = 'block';
+
+      // Optional: auto-hide after 5 seconds
+      setTimeout(() => {
+        hideError();
+      }, 5000);
+    }
+
+    function hideError() {
+      errorDiv.style.display = 'none';
+      errorMsg.textContent = '';
+    }
+  </script>
+</body>
+</html>
