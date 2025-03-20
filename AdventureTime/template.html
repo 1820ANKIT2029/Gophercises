@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{.Title}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(to bottom right, #eef2ff, #e0f2fe);
+    }
+  </style>
+</head>
+<body class="text-gray-800 min-h-screen flex items-center justify-center p-6">
+  <div class="max-w-3xl w-full bg-white shadow-2xl rounded-3xl p-10 space-y-8 animate-fade-in">
+    <div class="text-center">
+      <h1 class="text-4xl font-extrabold text-indigo-700">{{.Title}}</h1>
+      <div class="mt-2 w-24 h-1 bg-indigo-400 mx-auto rounded-full"></div>
+    </div>
+
+    <div class="space-y-5 text-lg leading-relaxed text-gray-700">
+      {{range .Story}}
+        <p class="text-justify">{{.}}</p>
+      {{end}}
+    </div>
+
+    {{if .Options}}
+    <div class="mt-8">
+      <h2 class="text-2xl font-semibold text-gray-800 mb-4 text-center">Choose Your Path</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {{range .Options}}
+          <a href="/{{.Arc}}"
+             class="bg-indigo-500 hover:bg-indigo-600 transition-all duration-200 text-white font-medium py-3 px-6 rounded-xl shadow hover:shadow-lg text-center">
+            {{.Text}}
+          </a>
+        {{end}}
+      </div>
+    </div>
+    {{end}}
+  </div>
+
+  <script>
+    // Basic fade animation
+    tailwind.config = {
+      theme: {
+        extend: {
+          animation: {
+            'fade-in': 'fadeIn 0.8s ease-in-out both'
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>
